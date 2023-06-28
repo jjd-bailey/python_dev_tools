@@ -28,7 +28,7 @@ def create_table_definitions_dicts(
                 'database': i[old_name]['database'],
                 'schema': i[old_name]['schema'],
                 'table': i[old_name]['table'],
-                'primary_key': i[old_name]['primary_column'],
+                'grain': i[old_name]['primary_column'],
                 'predicate_column1': '__NoColumnNameDefined__',
                 'predicate_column2': '__NoColumnNameDefined__'
             }

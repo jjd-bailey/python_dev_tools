@@ -17,7 +17,7 @@ def group_tables(
     ):
     tables = sorted(
         tables,
-        key = lambda x: x['rows'],
+        key = lambda x: list(x.values())[0]['record_count'],
         reverse = True
     )
     max_chunks = floor((group_time_m * 60) / chunk_time_s)
@@ -25,12 +25,14 @@ def group_tables(
     in_group = []
     chunk_cs = 0
     for i in tables:
-        name = i['name'].split('.')[2]
+        for zz in i.keys():
+            table_key = zz
+        name = i[table_key]['table']
         if camel_case:
             name = camelcase_to_snakecase(name)
         else:
             name = name.lower()
-        chunks =  ceil(i['rows'] / chunk_size)
+        chunks =  ceil(i[table_key]['record_count'] / chunk_size)
         old_chunks_cs = chunk_cs
         chunk_cs += chunks
         if chunk_cs >= max_chunks:

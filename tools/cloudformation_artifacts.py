@@ -24,13 +24,13 @@ from cloudformation.templates.glue_jobs import (
 ######
 #  Check if directories exist and if needed, create directories
 ######
-def check_directories(name: str):
-    if not path.exists(f'output/cloudformation/definitions/{name}'):
-        makedirs(f'output/cloudformation/definitions/{name}')
+def check_directories(definitions_directory: str, template_directory: str):
+    if not path.exists(f'zz_output/cloudformation/definitions/{definitions_directory}'):
+        makedirs(f'zz_output/cloudformation/definitions/{definitions_directory}')
 
 
-    if not path.exists(f'output/cloudformation/jobs/{name}'):
-        makedirs(f'output/cloudformation/jobs/{name}')
+    if not path.exists(f'zz_output/cloudformation/jobs/{template_directory}'):
+        makedirs(f'zz_output/cloudformation/jobs/{template_directory}')
 
 
 def create_glue_job_artifacts(
@@ -42,10 +42,13 @@ def create_glue_job_artifacts(
         datalake_database_name: str,
         glue_job_name: str,
         sql_file_name: str,
+        definitions_directory: str,
+        template_directory: str,
+        job_type: str,
 ):
 
 
-    check_directories(datalake_database_name)
+    check_directories(definitions_directory,template_directory)
 
 
 
@@ -55,7 +58,7 @@ def create_glue_job_artifacts(
         database = target_database
     )
 
-    database_tables = get_mssql_tables(engine = mssql_engine, schema_list = target_schema, remove_zero_rows = True)
+    database_tables = get_mssql_tables(engine = mssql_engine)
 
 
     table_defs = create_table_definitions_dicts(
@@ -64,7 +67,7 @@ def create_glue_job_artifacts(
         camel_case = True
     )
 
-    with open(f'output/cloudformation/definitions/{datalake_database_name}/{target_schema}.yaml', mode = 'w') as f:
+    with open(f'zz_output/cloudformation/definitions/{definitions_directory}/{job_type}.yaml', mode = 'w') as f:
         f.write(dump(table_defs, sort_keys = False))
 
 
@@ -85,8 +88,8 @@ def create_glue_job_artifacts(
         database = target_database,
         schema = target_schema,
         connection = glue_connection,
-        definitions = f'{datalake_database_name}/{target_schema}.yaml'
+        definitions = f'{datalake_database_name}/{job_type}.yaml'
     )
 
-    with open(f'output/cloudformation/jobs/{datalake_database_name}/child_{datalake_database_name}.yaml', mode = 'w') as f:
+    with open(f'zz_output/cloudformation/jobs/{template_directory}/child_{job_type}_{datalake_database_name}.yaml', mode = 'w') as f:
         f.write(dump(glue_jobs, sort_keys = False).replace("'", ""))
