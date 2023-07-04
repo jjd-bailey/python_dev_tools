@@ -35,6 +35,7 @@ def create_mssql_engine(
 
 def get_mssql_tables(
         engine,
+        schema,
     ) -> list[dict]:
     """
     Get all tables from MSSQL databases for a specified schema/s
@@ -68,6 +69,8 @@ def get_mssql_tables(
         WHERE
             w.type_desc = 'USER_TABLE'
         AND t.filter_definition IS NULL
+        AND y.rows IS NOT NULL
+        --AND q.name = :schema
         GROUP BY
             q.name
             ,w.name
@@ -81,6 +84,7 @@ def get_mssql_tables(
     with engine.connect() as con:
         res = con.execute(
             statement = list_tables,
+            schema = schema,
         )
         res = res.fetchall()
 
