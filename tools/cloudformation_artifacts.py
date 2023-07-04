@@ -25,22 +25,20 @@ def create_glue_job_artifacts(
         server_name: str,
         port_number: int,
         target_database: str,
-        target_schema: str,
         glue_connection: str,
-        datalake_database_name: str,
-        glue_job_name: str,
         sql_file_name: str,
-        definitions_directory: str,
-        template_directory: str,
         job_type: str,
 ):
+    #  'sdh-operational-full-grain-extract'
+    glue_job_name = f"{target_database.replace('_','-').lower()}-{job_type.replace('_','-').lower()}"
+
     mssql_engine = create_mssql_engine(
         host = server_name,
         port = port_number,
         database = target_database
     )
 
-    database_tables = get_mssql_tables(engine = mssql_engine, schema = target_schema)
+    database_tables = get_mssql_tables(engine = mssql_engine)
 
     create_table_definitions_dicts(
         tables = database_tables,

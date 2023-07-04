@@ -182,7 +182,7 @@ def create_glue_pyshell_jobs_dicts(
         jobs.append(f'JobName: !Ref {job}')
 
     template = {
-        'AWSTemplateFormatVersion': "'2010-09-09'",
+        'AWSTemplateFormatVersion': '2010-09-09',
         'Description': '> \
 Creates the necessary infrastructure to extract the SDH Operational tables.',
 
@@ -190,7 +190,7 @@ Creates the necessary infrastructure to extract the SDH Operational tables.',
             'CodeBucket': {
                 'Type': 'String',
                 'Description': 'The name of the s3 bucket where the code is located.',
-                'AllowedPattern': "'^[a-z][a-z0-9-]*$'",
+                'AllowedPattern': '^[a-z][a-z0-9-]*$',
                 'ConstraintDescription': 'Should be a valid s3 bucket name.'
             }
         },
@@ -198,7 +198,7 @@ Creates the necessary infrastructure to extract the SDH Operational tables.',
             'Type': 'String',
             'Description': '> \
 The repository name containing the code.',
-            'AllowedPattern': "'^[a-zA-Z][a-zA-Z0-9_.-/]*[a-zA-Z0-9_\.-]$'",
+            'AllowedPattern': '^[a-zA-Z][a-zA-Z0-9_.-/]*[a-zA-Z0-9_\.-]$',
             'ConstraintDescription': '> \
 Should start with a letter and can only contain alphanumeric characters \
 and the special characters (_.-).'
@@ -206,7 +206,7 @@ and the special characters (_.-).'
         'DataBucket': {
             'Type': 'String',
             'Description': 'The name of the s3 bucket used to store extract results.',
-            'AllowedPattern': "'^[a-z][a-z0-9-]*$'",
+            'AllowedPattern': '^[a-z][a-z0-9-]*$',
             'ConstraintDescription': 'Should be a valid s3 bucket name.'
         },
         'GlueJobRole': {
