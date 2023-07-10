@@ -42,14 +42,14 @@ def get_mssql_tables(
     """
     list_tables = text("""
         SELECT
-             DB_NAME()                                                          AS DatabaseName
-            ,q.name                                                             AS SchemaName
-            ,w.name                                                             AS TableName
-            ,e.name                                                             AS ColumnName
-            ,r.name                                                             AS ColumnDataType
-            ,y.rows                                                             AS RecordCount
-            ,SUM(u.used_pages) * 8                                              AS UsedSpaceKB
-            ,IIF(y.rows = 0,0,CAST(SUM(u.used_pages) * 8 AS FLOAT) / y.rows)    AS KbPerRow
+             DB_NAME()                                                                                  AS DatabaseName
+            ,q.name                                                                                     AS SchemaName
+            ,w.name                                                                                     AS TableName
+            ,ISNULL(e.name,'__NoColumnNameDefined__')                                                   AS ColumnName
+            ,r.name                                                                                     AS ColumnDataType
+            ,ISNULL(y.rows,0)                                                                           AS RecordCount
+            ,SUM(u.used_pages) * 8                                                                      AS UsedSpaceKB
+            ,IIF(ISNULL(y.rows,0) = 0,0,CAST(SUM(u.used_pages) * 8 AS FLOAT) / ISNULL(y.rows,0))        AS KbPerRow
         FROM sys.schemas q WITH (NOLOCK)
         INNER JOIN sys.tables w WITH (NOLOCK)
             ON  q.schema_id = w.schema_id
@@ -68,13 +68,12 @@ def get_mssql_tables(
         WHERE
             w.type_desc = 'USER_TABLE'
         AND t.filter_definition IS NULL
-        AND y.rows IS NOT NULL
         GROUP BY
-            q.name
+             q.name
             ,w.name
-            ,e.name
+            ,ISNULL(e.name,'__NoColumnNameDefined__')
             ,r.name
-            ,y.rows
+            ,ISNULL(y.rows,0)
         ;
     """)
 
