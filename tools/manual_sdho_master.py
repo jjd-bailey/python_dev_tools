@@ -76,15 +76,11 @@ len(target_tables)
 '''
     Create definitions dict
 '''
-resource = {}
-schema_list = {}
-
-
 sdho_inputs = {
     'TruckSerials': {
         'Grain': 'TruckId',
-        'predicate_column1': 'DateCreated',
-        'predicate_column2': 'DateUpdated',
+        'create_delta': 'DateCreated',
+        'update_delta': 'DateUpdated',
         'ExtractType': 'delta_extract',
     },
     'PartSourceSystem': {
@@ -101,8 +97,8 @@ sdho_inputs = {
     },
     'UserSetting': {
         'Grain': 'UserId',
-        'predicate_column1': 'DateCreated',
-        'predicate_column2': 'DateUpdated',
+        'create_delta': 'DateCreated',
+        'update_delta': 'DateUpdated',
         'ExtractType': 'delta_extract',
     },
     'IllustrationSharedConfigurationMediaTie': {
@@ -119,8 +115,98 @@ sdho_inputs = {
     },
     'TruckProductionInfo': {
         'Grain': 'TruckId',
-        'predicate_column1': 'DateCreated',
-        'predicate_column2': 'DateUpdated',
+        'create_delta': 'DateCreated',
+        'update_delta': 'DateUpdated',
+        'ExtractType': 'delta_extract',
+    },
+    'ExceptionLog': {
+        'Grain': 'ExceptionLogId',
+        'create_delta': 'Logged',
+        'update_delta': 'Logged',
+        'ExtractType': 'delta_extract',
+    },
+    'IllustrationCallout': {
+        'ExtractType': 'full_extract',
+    },
+    'IllustrationCalloutCoordinate': {
+        'ExtractType': 'full_extract',
+    },
+    'PartIllustration': {
+        'ExtractType': 'full_extract',
+    },
+    'CustomerTypeTie': {
+        'ExtractType': 'full_extract',
+    },
+    'MediaMetadata': {
+        'ExtractType': 'full_extract',
+    },
+    'UserSiteTie': {
+        'ExtractType': 'full_extract',
+    },
+    'SiteLayoutFlow': {
+        'ExtractType': 'full_extract',
+    },
+    'Abbreviation': {
+        'ExtractType': 'full_extract',
+    },
+    'UsePointGlobal': {
+        'ExtractType': 'full_extract',
+    },
+    'SubassemblyBuildSiteRule': {
+        'Grain': 'SubassemblyBuildSiteRuleId',
+        'create_delta': 'StartDate',
+        'update_delta': 'EndDate',
+        'ExtractType': 'delta_extract',
+    },
+    'JobTitle': {
+        'ExtractType': 'full_extract',
+    },
+    'Connection': {
+        'ExtractType': 'full_extract',
+    },
+    'DepartmentRole': {
+        'ExtractType': 'full_extract',
+    },
+    'InterSiteDeliveryLocation': {
+        'ExtractType': 'full_extract',
+    },
+    'Division': {
+        'ExtractType': 'full_extract',
+    },
+    'UsePointType': {
+        'ExtractType': 'full_extract',
+    },
+    'Company': {
+        'ExtractType': 'full_extract',
+    },
+    'PartClassification': {
+        'ExtractType': 'full_extract',
+    },
+    'QADPartStatus': {
+        'ExtractType': 'full_extract',
+    },
+    'SupplierRelationshipType': {
+        'ExtractType': 'full_extract',
+    },
+    'CorporateHierarchy': {
+        'ExtractType': 'full_extract',
+    },
+    'SmartTruckSalesCode': {
+        'ExtractType': 'full_extract',
+    },
+    'SiteType': {
+        'ExtractType': 'full_extract',
+    },
+    'MediaMetadataType': {
+        'ExtractType': 'full_extract',
+    },
+    'IllustrationCalloutExceptionCoordinate': {
+        'ExtractType': 'full_extract',
+    },
+    'PartRevisionMedia': {
+        'Grain': 'PartRevisionMediaId',
+        'create_delta': 'DateCreated',
+        'update_delta': 'DateUpdated',
         'ExtractType': 'delta_extract',
     },
 }
@@ -128,6 +214,9 @@ sdho_inputs = {
 '''
     Create iter item to check table definition
 '''
+resource = {}
+schema_list = {}
+
 table_meta = iter(target_tables)
 table_data = next(table_meta)
 
@@ -139,10 +228,12 @@ loop = True
 
 while loop:
     loop = False
+    next_table = None
 
     for q in table_data:
         table_name = q
         grain_check = table_data[table_name]['primary_column']
+        delta_check = table_data[table_name]['create_delta']
 
     if table_name.split('.')[2] in sdho_inputs:
         """
@@ -182,12 +273,14 @@ while loop:
 
 
             resource[new_name] = {
-                'sql': sql_file_name,
+                'sql': 'mssql_delta_extract_2date_delta.sql',
                 'parameters': {
                     'database': table_data[table_name]['database'],
                     'schema': table_data[table_name]['schema'],
                     'table': table_data[table_name]['table'],
-                    'grain': sdho_inputs[table_name.split('.')[2]]['Grain']
+                    'grain': sdho_inputs[table_name.split('.')[2]]['Grain'],
+                    'create_delta': sdho_inputs[table_name.split('.')[2]]['create_delta'],
+                    'update_delta': sdho_inputs[table_name.split('.')[2]]['update_delta']
                 }
             }
 
@@ -196,7 +289,8 @@ while loop:
         """
             Check if programatic values can be used
         """
-        if grain_check != '__NoColumnNameDefined__':
+        if (grain_check != '__NoColumnNameDefined__' \
+        and delta_check != '__NoColumnNameDefined__'):
             ####
             # Get table name in snake_case
             ####
@@ -211,18 +305,20 @@ while loop:
                 schema_list[table_data[table_name]['schema']].append(new_name)
 
             resource[new_name] = {
-                'sql': sql_file_name,
+                'sql': 'mssql_delta_extract_2date_delta.sql',
                 'parameters': {
                     'database': table_data[table_name]['database'],
                     'schema': table_data[table_name]['schema'],
                     'table': table_data[table_name]['table'],
-                    'grain': table_data[table_name]['primary_column']
+                    'grain': table_data[table_name]['primary_column'],
+                    'create_delta': table_data[table_name]['create_delta'],
+                    'update_delta': table_data[table_name]['update_delta']
                 }
             }
 
             next_table = True
         else:
-            next_table = False
+            next_table = None
 
     if next_table:
         f'{table_data} configured'
@@ -236,6 +332,31 @@ table_data[table_name]['table']
 
 len(target_tables)
 len(resource)
+
+
+
+
+body = {}
+for table in resource:
+    body[table] = resource[table]
+
+###
+# Check if directory exists
+###
+if not path.exists(f'zz_output/cloudformation/definitions/{target_database.lower()}'):
+    makedirs(f'zz_output/cloudformation/definitions/{target_database.lower()}')
+
+###
+# Write config file
+###
+with open(f'zz_output/cloudformation/definitions/{target_database.lower()}/{target_schema.lower()}.yaml', mode = 'w') as f:
+    f.write(dump(body, sort_keys = False))
+
+
+
+
+
+
 
 """
     Table does not have PKey defined
